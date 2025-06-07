@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35312.102
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RPG", "RPG\RPG.csproj", "{DA021FD3-6323-429D-8380-2D95232324BD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raycaster", "Raycaster\Raycaster.csproj", "{65163C41-6FCC-4E8F-B698-3BE1F76CB39B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RPG.Core", "RPG.Core\RPG.Core.csproj", "{E0D2180E-23A7-4721-880E-DCFED2CEFC1F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DA021FD3-6323-429D-8380-2D95232324BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA021FD3-6323-429D-8380-2D95232324BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA021FD3-6323-429D-8380-2D95232324BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA021FD3-6323-429D-8380-2D95232324BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65163C41-6FCC-4E8F-B698-3BE1F76CB39B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65163C41-6FCC-4E8F-B698-3BE1F76CB39B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65163C41-6FCC-4E8F-B698-3BE1F76CB39B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65163C41-6FCC-4E8F-B698-3BE1F76CB39B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E0D2180E-23A7-4721-880E-DCFED2CEFC1F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E0D2180E-23A7-4721-880E-DCFED2CEFC1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E0D2180E-23A7-4721-880E-DCFED2CEFC1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E0D2180E-23A7-4721-880E-DCFED2CEFC1F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {29416034-D793-4C0E-B55B-10A53FF105C1}
+	EndGlobalSection
+EndGlobal
