@@ -19,33 +19,32 @@ namespace Raycaster
 		}
 
 		private bool[,] visibility;
-		private int mapWidth;
+		private int _mapSize;
 		private int mapHeight;
 		private int tileSize;
 		private Texture2D pixel;
 		private SpriteBatch spriteBatch;
 
-		private Minimap(int width, int height, int tileSize, GraphicsDevice graphicsDevice, SpriteBatch spriteBatch)
+		private Minimap(int mapSize, int tileSize, GraphicsDevice graphicsDevice, SpriteBatch spriteBatch)
 		{
-			this.mapWidth = width;
-			this.mapHeight = height;
+			_mapSize = mapSize;
 			this.tileSize = tileSize;
 			this.spriteBatch = spriteBatch;
-			visibility = new bool[height, width];
+			visibility = new bool[mapSize, mapSize];
 
 			pixel = new Texture2D(graphicsDevice, 1, 1);
 			pixel.SetData(new[] { Color.White });
 		}
 
-		public static void Initialize(int width, int height, int tileSize, GraphicsDevice graphicsDevice, SpriteBatch spriteBatch)
+		public static void Initialize(int mapSize, int tileSize, GraphicsDevice graphicsDevice, SpriteBatch spriteBatch)
 		{
 			if (instance == null)
-				instance = new Minimap(width, height, tileSize, graphicsDevice, spriteBatch);
+				instance = new Minimap(mapSize, tileSize, graphicsDevice, spriteBatch);
 		}
 
 		public void MarkVisible(int x, int y)
 		{
-			if (x >= 0 && x < mapWidth && y >= 0 && y < mapHeight)
+			if (x >= 0 && x < _mapSize && y >= 0 && y < mapHeight)
 				visibility[y, x] = true;
 		}
 
@@ -53,7 +52,7 @@ namespace Raycaster
 		{
 			int offsetX = 10;
 			int offsetY = 10;
-			int minimapWidth = mapWidth * tileSize;
+			int minimapWidth = _mapSize * tileSize;
 			int minimapHeight = mapHeight * tileSize;
 
 			// Background and border
@@ -64,7 +63,7 @@ namespace Raycaster
 
 			for (int y = 0; y < mapHeight; y++)
 			{
-				for (int x = 0; x < mapWidth; x++)
+				for (int x = 0; x < _mapSize; x++)
 				{
 					if (!visibility[y, x]) continue;
 
@@ -113,7 +112,7 @@ namespace Raycaster
 		public void ClearMap()
 		{
 			for (int y = 0; y < mapHeight; y++)
-				for (int x = 0; x < mapWidth; x++)
+				for (int x = 0; x < _mapSize; x++)
 					visibility[y, x] = false;
 		}
 	}

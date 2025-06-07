@@ -90,8 +90,9 @@ namespace RPG.Core.Helpers
 		}
 
 
-		public static Vector2 FindSafeStartPosition(int[,] map)
+		public static Vector2 FindSafeStartPosition()
 		{
+			var map = MapManager.Instance.GetMap();
 			int width = map.GetLength(1);
 			int height = map.GetLength(0);
 

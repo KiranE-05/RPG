@@ -1,3 +1,4 @@
+using Raycaster;
 using RPG.Core.Helpers;
 using System;
 
@@ -43,6 +44,7 @@ namespace RPG.Core
 			// You can plug in your maze generation function here
 			var generatedMap = MapHelper.GenerateRandomMap(width, height);
 			SetMap(generatedMap);
+			Minimap.Instance.ClearMap();
 		}
 	}
 }

@@ -1,22 +1,37 @@
 ﻿using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Xna.Framework.Graphics;
 using Raycaster;
-using RPG.Core;
+using RPG.Core.Helpers;
 
-namespace RPG
+namespace RPG.Core
 {
-	internal class Player
+	public class Player
 	{
 		public Vector2 Position;
 		public Vector2 Direction;
 		public Vector2 CameraPlane;
 
-		public Player(Vector2 startPosition)
+		private static Player instance;
+		public static Player Instance
+		{
+			get
+			{
+				if (instance == null)
+					throw new InvalidOperationException("Player must be initialized first using Player.Initialize().");
+				return instance;
+			}
+		}
+
+		public static void Initialize(Vector2 startPosition)
+		{
+			if (instance == null)
+				instance = new Player(startPosition);
+		}
+
+
+		private Player(Vector2 startPosition)
 		{
 			Position = startPosition;
 			Direction = new Vector2(1, 0);
@@ -69,8 +84,8 @@ namespace RPG
 				checkY >= 0 && checkY < MapManager.Instance.GetMap().GetLength(0) &&
 				MapManager.Instance.GetMap()[checkY, checkX] == 2)
 			{
-				MapManager.Instance.Regenerate(25,25);
-				Position = new Vector2(2, 2); // Reset to a starting position
+				MapManager.Instance.Regenerate(25, 25);
+				Position = MapHelper.FindSafeStartPosition(); // Reset to a starting position
 				Direction = new Vector2(1, 0);
 				CameraPlane = new Vector2(0, 0.66f);
 			}

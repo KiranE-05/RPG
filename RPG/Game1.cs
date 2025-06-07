@@ -17,21 +17,14 @@ namespace RPG
 		Texture2D exitTexture;
 		Texture2D _playerDot;
 
-		private Raycaster.Raycaster raycaster;
-		private MapManager mapManager;
-		private Player player;
-
-		private int _mapWidth = 20;
-		private int _mapHeight = 20;
-
-		public int[,] map;
+		private readonly int _mapSize = 25;
 
 		public Game1()
 		{
 			var gdm = new GraphicsDeviceManager(this);
 			gdm.PreferredBackBufferHeight = 600;
 			gdm.PreferredBackBufferWidth = 800;
-			gdm.IsFullScreen = true;
+			gdm.IsFullScreen = false;
 			_graphics = gdm;
 			Content.RootDirectory = "Content";
 			IsMouseVisible = true;
@@ -42,12 +35,6 @@ namespace RPG
 			IsMouseVisible = false;
 			GraphicsDevice.SamplerStates[0] = SamplerState.PointClamp;
 			Mouse.SetPosition(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2);
-
-			// Access the shared map
-			MapManager.Instance.Regenerate(_mapWidth, _mapHeight);
-			var map = MapManager.Instance.GetMap();
-
-			player = new Player(MapHelper.FindSafeStartPosition(MapManager.Instance.GetMap()));
 
 			_playerDot = new Texture2D(GraphicsDevice, 1, 1);
 			_playerDot.SetData(new[] { Color.Red });
@@ -61,12 +48,16 @@ namespace RPG
 
 			GraphicsDevice.Clear(Color.Black);
 
+			Minimap.Initialize(_mapSize, 6, GraphicsDevice, _spriteBatch);
+			MapManager.Instance.Regenerate(_mapSize);
+
+			Player.Initialize(MapHelper.FindSafeStartPosition());
+
 			stoneTexture = Content.Load<Texture2D>("Textures/stonebricks1");
 			exitTexture = Content.Load<Texture2D>("Textures/stonebricks1_door");
 
-			raycaster = new Raycaster.Raycaster(stoneTexture, exitTexture, stoneTexture, _spriteBatch);
+			Raycaster.Raycaster.Initialize(stoneTexture, exitTexture, stoneTexture, _spriteBatch);
 
-			Minimap.Initialize(_mapWidth, _mapHeight, 4, GraphicsDevice, _spriteBatch);
 		}
 
 		protected override void Update(GameTime gameTime)
@@ -83,27 +74,27 @@ namespace RPG
 
 			if (deltaX != 0)
 			{
-				player.Rotate(rotationAmount);
+				Player.Instance.Rotate(rotationAmount);
 				Mouse.SetPosition(centerX, mouse.Y);
 			}
 
-			player.Update(gameTime);
+			Player.Instance.Update(gameTime);
 
 			base.Update(gameTime);
 		}
 
 		protected override void Draw(GameTime gameTime)
 		{
-			GraphicsDevice.Clear(Color.CornflowerBlue);
+			GraphicsDevice.Clear(Color.Black);
 			_spriteBatch.Begin();
 
-			raycaster.Render(GraphicsDevice.Viewport.Width,
+			Raycaster.Raycaster.Instance.Render(GraphicsDevice.Viewport.Width,
 					GraphicsDevice.Viewport.Height,
-					player.Position,       // pass current player position
-					player.Direction,      // current player direction
-					player.CameraPlane);   // current camera plane
+					Player.Instance.Position,       // pass current player position
+					Player.Instance.Direction,      // current player direction
+					Player.Instance.CameraPlane);   // current camera plane
 
-			Minimap.Instance.Draw(player.Position, player.Direction);
+			Minimap.Instance.Draw(Player.Instance.Position, Player.Instance.Direction);
 
 			_spriteBatch.End();
 			base.Draw(gameTime);

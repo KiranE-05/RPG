@@ -8,6 +8,17 @@ namespace Raycaster
 {
 	public class Raycaster
 	{
+		private static Raycaster instance;
+		public static Raycaster Instance
+		{
+			get
+			{
+				if (instance == null)
+					throw new InvalidOperationException("Raycaster must be initialized first using Raycaster.Initialize().");
+				return instance;
+			}
+		}
+
 		private int mapWidth;
 		private int mapHeight;
 		private Texture2D wallTexture;
@@ -19,10 +30,10 @@ namespace Raycaster
 		private int texWidth;
 		private int texHeight;
 
-		public Raycaster(Texture2D wallTexture, Texture2D exitTexture, Texture2D floorTexture, SpriteBatch spriteBatch)
-		{ 
-			this.mapHeight = MapManager.Instance.GetMap().GetLength(0);
-			this.mapWidth = MapManager.Instance.GetMap().GetLength(1);
+		private Raycaster(Texture2D wallTexture, Texture2D exitTexture, Texture2D floorTexture, SpriteBatch spriteBatch)
+		{
+			mapHeight = MapManager.Instance.GetMap().GetLength(0);
+			mapWidth = MapManager.Instance.GetMap().GetLength(1);
 			this.wallTexture = wallTexture;
 			this.exitTexture = exitTexture;
 			this._floorTexture = floorTexture;
@@ -31,9 +42,14 @@ namespace Raycaster
 			texWidth = wallTexture.Width;
 			texHeight = wallTexture.Height;
 
-			// Extract floor texture color data once for sampling
 			floorTextureData = new Color[_floorTexture.Width * _floorTexture.Height];
 			_floorTexture.GetData(floorTextureData);
+		}
+
+		public static void Initialize(Texture2D wallTexture, Texture2D exitTexture, Texture2D floorTexture, SpriteBatch spriteBatch)
+		{
+			if (instance == null)
+				instance = new Raycaster(wallTexture, exitTexture, floorTexture, spriteBatch);
 		}
 
 		public void Render(int screenWidth, int screenHeight,
@@ -81,7 +97,6 @@ namespace Raycaster
 
 				while (!hit && steps < maxSteps)
 				{
-					// Reveal cell in minimap
 					Minimap.Instance.MarkVisible((int)mapCheck.X, (int)mapCheck.Y);
 
 					if (sideDist.X < sideDist.Y)
@@ -106,7 +121,6 @@ namespace Raycaster
 					steps++;
 				}
 
-
 				if (!hit)
 					continue;
 
@@ -120,15 +134,11 @@ namespace Raycaster
 				else
 					perpWallDist = (mapCheck.Y - playerPos.Y + (1 - step.Y) / 2f) / rayDir.Y;
 
-				perpWallDist = Math.Abs(perpWallDist);
-				perpWallDist = Math.Max(perpWallDist, 0.1f);
+				perpWallDist = Math.Max(Math.Abs(perpWallDist), 0.1f);
 
 				int lineHeight = (int)(screenHeight / perpWallDist);
-				int drawStart = -lineHeight / 2 + screenHeight / 2;
-				int drawEnd = lineHeight / 2 + screenHeight / 2;
-
-				drawStart = Math.Clamp(drawStart, 0, screenHeight - 1);
-				drawEnd = Math.Clamp(drawEnd, 0, screenHeight - 1);
+				int drawStart = Math.Clamp(-lineHeight / 2 + screenHeight / 2, 0, screenHeight - 1);
+				int drawEnd = Math.Clamp(lineHeight / 2 + screenHeight / 2, 0, screenHeight - 1);
 
 				float wallX = (side == 0)
 					? playerPos.Y + perpWallDist * rayDir.Y
@@ -141,13 +151,10 @@ namespace Raycaster
 
 				texX = Math.Clamp(texX, 0, texWidth - 1);
 
-				// Instead of drawing the entire vertical line in one call, draw pixel by pixel vertically:
-
 				for (int y = drawStart; y < drawEnd; y++)
 				{
-					int d = y * 256 - screenHeight * 128 + lineHeight * 128;  // 256 and 128 are fixed point multipliers for precision
+					int d = y * 256 - screenHeight * 128 + lineHeight * 128;
 					int texY = ((d * texHeight) / lineHeight) / 256;
-
 					texY = Math.Clamp(texY, 0, texHeight - 1);
 
 					Rectangle sourceRect = new Rectangle(texX, texY, 1, 1);
@@ -157,9 +164,8 @@ namespace Raycaster
 
 					_spriteBatch.Draw(texToUse, destRect, sourceRect, shade);
 				}
-				// Floor and Ceiling rendering
 
-				// Calculate exact floor position at bottom of wall slice
+				// Floor and ceiling
 				float floorWallX, floorWallY;
 
 				if (side == 0 && rayDir.X > 0)
@@ -200,10 +206,8 @@ namespace Raycaster
 					Color floorColor = floorTextureData[floorTexX + floorTexY * texWidth];
 					Color ceilingColor = floorColor;
 
-					// Draw floor pixel
 					_spriteBatch.Draw(_floorTexture, new Rectangle(x, y, 1, 1), new Rectangle(floorTexX, floorTexY, 1, 1), floorColor);
 
-					// Draw ceiling pixel (mirror vertically)
 					int ceilingY = screenHeight - y;
 					if (ceilingY >= 0 && ceilingY < screenHeight)
 					{
@@ -211,11 +215,6 @@ namespace Raycaster
 					}
 				}
 			}
-		}
-
-		public void LoadNextLevel()
-		{
-			MapManager.Instance.Regenerate(25,25);
 		}
 	}
 }
