@@ -16,61 +16,79 @@ namespace RPG.Core.Helpers
 		public static int[,] GenerateRandomMap(int width, int height, Random rng = null)
 		{
 			if (width < 3 || height < 3)
-				throw new ArgumentException("Width and height must be at least 3 to have an exit.");
+				throw new ArgumentException("Width and height must be at least 3.");
 
 			rng ??= new Random();
-
 			int[,] map = new int[height, width];
 
-			// Fill outer edges with walls
-			for (int x = 0; x < width; x++)
-			{
-				map[0, x] = 1;
-				map[height - 1, x] = 1;
-			}
+			// Fill all cells with walls initially
 			for (int y = 0; y < height; y++)
-			{
-				map[y, 0] = 1;
-				map[y, width - 1] = 1;
-			}
+				for (int x = 0; x < width; x++)
+					map[y, x] = 1;
 
-			// Fill inner cells randomly with walls or empty space
-			for (int y = 1; y < height - 1; y++)
+			int centerX = width / 2;
+			int centerY = height / 2;
+
+			// Ensure odd dimensions for proper maze generation
+			if (centerX % 2 == 0) centerX--;
+			if (centerY % 2 == 0) centerY--;
+
+			// Carve maze using DFS from center
+			var stack = new Stack<(int x, int y)>();
+			stack.Push((centerX, centerY));
+			map[centerY, centerX] = 0;
+
+			int[,] directions = new int[,] { { 0, -2 }, { 2, 0 }, { 0, 2 }, { -2, 0 } };
+
+			while (stack.Count > 0)
 			{
-				for (int x = 1; x < width - 1; x++)
+				var (x, y) = stack.Pop();
+
+				// Shuffle directions
+				var dirs = Enumerable.Range(0, 4).OrderBy(_ => rng.Next()).ToList();
+
+				foreach (int i in dirs)
 				{
-					// Randomly wall (30%) or empty (70%)
-					map[y, x] = (rng.NextDouble() < 0.3) ? 1 : 0;
+					int dx = directions[i, 0];
+					int dy = directions[i, 1];
+
+					int nx = x + dx;
+					int ny = y + dy;
+
+					if (nx > 0 && nx < width - 1 && ny > 0 && ny < height - 1 && map[ny, nx] == 1)
+					{
+						map[ny, nx] = 0; // carve new cell
+						map[y + dy / 2, x + dx / 2] = 0; // carve passage between
+						stack.Push((nx, ny));
+					}
 				}
 			}
 
-			// Find all wall positions inside map to pick exit from
-			var wallPositions = new System.Collections.Generic.List<(int x, int y)>();
+			// Choose a maze edge cell as an exit
+			var possibleExits = new List<(int x, int y)>();
+			for (int x = 1; x < width - 1; x++)
+			{
+				if (map[1, x] == 0) possibleExits.Add((x, 0)); // top
+				if (map[height - 2, x] == 0) possibleExits.Add((x, height - 1)); // bottom
+			}
 			for (int y = 1; y < height - 1; y++)
 			{
-				for (int x = 1; x < width - 1; x++)
-				{
-					if (map[y, x] == 1)
-						wallPositions.Add((x, y));
-				}
+				if (map[y, 1] == 0) possibleExits.Add((0, y)); // left
+				if (map[y, width - 2] == 0) possibleExits.Add((width - 1, y)); // right
 			}
 
-			if (wallPositions.Count == 0)
+			if (possibleExits.Count > 0)
 			{
-				// No walls inside, just create an exit at center
-				int centerX = width / 2;
-				int centerY = height / 2;
-				map[centerY, centerX] = 2;
+				var (ex, ey) = possibleExits[rng.Next(possibleExits.Count)];
+				map[ey, ex] = 2; // exit
 			}
-			else
-			{
-				// Pick random wall to become exit
-				var exitPos = wallPositions[rng.Next(wallPositions.Count)];
-				map[exitPos.y, exitPos.x] = 2;
-			}
+
+			// Ensure player start location is empty
+			map[centerY, centerX] = 0;
 
 			return map;
 		}
+
 
 		public static Vector2 FindSafeStartPosition(int[,] map)
 		{

@@ -8,7 +8,6 @@ namespace Raycaster
 {
 	public class Raycaster
 	{
-		private int[,] map;
 		private int mapWidth;
 		private int mapHeight;
 		private Texture2D wallTexture;
@@ -20,14 +19,10 @@ namespace Raycaster
 		private int texWidth;
 		private int texHeight;
 
-		public Minimap Minimap { get; set; }
-
-
-		public Raycaster(int[,] map, Texture2D wallTexture, Texture2D exitTexture, Texture2D floorTexture, SpriteBatch spriteBatch)
-		{
-			this.map = map;
-			this.mapHeight = map.GetLength(0);
-			this.mapWidth = map.GetLength(1);
+		public Raycaster(Texture2D wallTexture, Texture2D exitTexture, Texture2D floorTexture, SpriteBatch spriteBatch)
+		{ 
+			this.mapHeight = MapManager.Instance.GetMap().GetLength(0);
+			this.mapWidth = MapManager.Instance.GetMap().GetLength(1);
 			this.wallTexture = wallTexture;
 			this.exitTexture = exitTexture;
 			this._floorTexture = floorTexture;
@@ -87,7 +82,7 @@ namespace Raycaster
 				while (!hit && steps < maxSteps)
 				{
 					// Reveal cell in minimap
-					Minimap?.MarkVisible((int)mapCheck.X, (int)mapCheck.Y);
+					Minimap.Instance.MarkVisible((int)mapCheck.X, (int)mapCheck.Y);
 
 					if (sideDist.X < sideDist.Y)
 					{
@@ -105,7 +100,7 @@ namespace Raycaster
 					if (mapCheck.X < 0 || mapCheck.X >= mapWidth || mapCheck.Y < 0 || mapCheck.Y >= mapHeight)
 						break;
 
-					if (map[(int)mapCheck.Y, (int)mapCheck.X] > 0)
+					if (MapManager.Instance.GetMap()[(int)mapCheck.Y, (int)mapCheck.X] > 0)
 						hit = true;
 
 					steps++;
@@ -115,7 +110,7 @@ namespace Raycaster
 				if (!hit)
 					continue;
 
-				int mapTile = map[(int)mapCheck.Y, (int)mapCheck.X];
+				int mapTile = MapManager.Instance.GetMap()[(int)mapCheck.Y, (int)mapCheck.X];
 				Texture2D texToUse = (mapTile == 2) ? exitTexture : wallTexture;
 
 				float perpWallDist;
@@ -220,12 +215,7 @@ namespace Raycaster
 
 		public void LoadNextLevel()
 		{
-			map = MapHelper.GenerateRandomMap(50, 50);
-		}
-
-		public int[,] GetMap()
-		{
-			return map;
+			MapManager.Instance.Regenerate(25,25);
 		}
 	}
 }

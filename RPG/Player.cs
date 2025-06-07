@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Raycaster;
+using RPG.Core;
 
 namespace RPG
 {
@@ -15,17 +16,14 @@ namespace RPG
 		public Vector2 Direction;
 		public Vector2 CameraPlane;
 
-		private int[,] map;
-
-		public Player(Vector2 startPosition, int[,] map)
+		public Player(Vector2 startPosition)
 		{
 			Position = startPosition;
 			Direction = new Vector2(1, 0);
 			CameraPlane = new Vector2(0, 0.66f);
-			this.map = map;
 		}
 
-		public void Update(GameTime gameTime, int[,] map, Raycaster.Raycaster raycaster)
+		public void Update(GameTime gameTime)
 		{
 			KeyboardState keyboard = Keyboard.GetState();
 
@@ -63,9 +61,15 @@ namespace RPG
 			int playerTileX = (int)Position.X;
 			int playerTileY = (int)Position.Y;
 
-			if (raycaster.GetMap()[playerTileY, playerTileX] == 2)
+			Vector2 checkPos = Position + Direction * 0.5f; // 0.5 units in front of the player
+			int checkX = (int)checkPos.X;
+			int checkY = (int)checkPos.Y;
+
+			if (checkX >= 0 && checkX < MapManager.Instance.GetMap().GetLength(1) &&
+				checkY >= 0 && checkY < MapManager.Instance.GetMap().GetLength(0) &&
+				MapManager.Instance.GetMap()[checkY, checkX] == 2)
 			{
-				raycaster.LoadNextLevel();
+				MapManager.Instance.Regenerate(25,25);
 				Position = new Vector2(2, 2); // Reset to a starting position
 				Direction = new Vector2(1, 0);
 				CameraPlane = new Vector2(0, 0.66f);
@@ -91,10 +95,10 @@ namespace RPG
 			int x = (int)pos.X;
 			int y = (int)pos.Y;
 
-			if (x < 0 || x >= map.GetLength(1) || y < 0 || y >= map.GetLength(0))
+			if (x < 0 || x >= MapManager.Instance.GetMap().GetLength(1) || y < 0 || y >= MapManager.Instance.GetMap().GetLength(0))
 				return false;
 
-			return map[y, x] == 0;
+			return MapManager.Instance.GetMap()[y, x] == 0;
 		}
 	}
 }

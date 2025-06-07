@@ -1,11 +1,23 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using RPG.Core;
 using System;
 
 namespace Raycaster
 {
 	public class Minimap
 	{
+		private static Minimap instance;
+		public static Minimap Instance
+		{
+			get
+			{
+				if (instance == null)
+					throw new InvalidOperationException("Minimap must be initialized first using Minimap.Initialize().");
+				return instance;
+			}
+		}
+
 		private bool[,] visibility;
 		private int mapWidth;
 		private int mapHeight;
@@ -13,7 +25,7 @@ namespace Raycaster
 		private Texture2D pixel;
 		private SpriteBatch spriteBatch;
 
-		public Minimap(int width, int height, int tileSize, GraphicsDevice graphicsDevice, SpriteBatch spriteBatch)
+		private Minimap(int width, int height, int tileSize, GraphicsDevice graphicsDevice, SpriteBatch spriteBatch)
 		{
 			this.mapWidth = width;
 			this.mapHeight = height;
@@ -25,22 +37,30 @@ namespace Raycaster
 			pixel.SetData(new[] { Color.White });
 		}
 
+		public static void Initialize(int width, int height, int tileSize, GraphicsDevice graphicsDevice, SpriteBatch spriteBatch)
+		{
+			if (instance == null)
+				instance = new Minimap(width, height, tileSize, graphicsDevice, spriteBatch);
+		}
+
 		public void MarkVisible(int x, int y)
 		{
 			if (x >= 0 && x < mapWidth && y >= 0 && y < mapHeight)
 				visibility[y, x] = true;
 		}
 
-		public void Draw(int[,] map, Vector2 playerPos, Vector2 playerDir)
+		public void Draw(Vector2 playerPos, Vector2 playerDir)
 		{
 			int offsetX = 10;
 			int offsetY = 10;
 			int minimapWidth = mapWidth * tileSize;
 			int minimapHeight = mapHeight * tileSize;
 
-			// Draw background
-			spriteBatch.Draw(pixel, new Rectangle(offsetX - 2, offsetY - 2, minimapWidth + 4, minimapHeight + 4), Color.Gold); // Border
-			spriteBatch.Draw(pixel, new Rectangle(offsetX, offsetY, minimapWidth, minimapHeight), Color.Gray); // Background
+			// Background and border
+			spriteBatch.Draw(pixel, new Rectangle(offsetX - 2, offsetY - 2, minimapWidth + 4, minimapHeight + 4), Color.Gold);
+			spriteBatch.Draw(pixel, new Rectangle(offsetX, offsetY, minimapWidth, minimapHeight), Color.Gray);
+
+			var map = MapManager.Instance.GetMap();
 
 			for (int y = 0; y < mapHeight; y++)
 			{
@@ -52,7 +72,7 @@ namespace Raycaster
 					{
 						0 => Color.Black,
 						1 => Color.Gray,
-						2 => Color.Red,
+						2 => Color.Green,
 						_ => Color.DarkGray
 					};
 
@@ -62,12 +82,12 @@ namespace Raycaster
 				}
 			}
 
-			// Draw player
+			// Player
 			spriteBatch.Draw(pixel,
 				new Rectangle(offsetX + (int)(playerPos.X * tileSize), offsetY + (int)(playerPos.Y * tileSize), tileSize / 2, tileSize / 2),
 				Color.Yellow);
 
-			// Draw viewing direction
+			// View direction
 			Vector2 end = playerPos + playerDir * 2f;
 			DrawLine((int)(playerPos.X * tileSize) + offsetX, (int)(playerPos.Y * tileSize) + offsetY,
 					 (int)(end.X * tileSize) + offsetX, (int)(end.Y * tileSize) + offsetY,
@@ -88,6 +108,13 @@ namespace Raycaster
 				if (e2 >= dy) { err += dy; x0 += sx; }
 				if (e2 <= dx) { err += dx; y0 += sy; }
 			}
+		}
+
+		public void ClearMap()
+		{
+			for (int y = 0; y < mapHeight; y++)
+				for (int x = 0; x < mapWidth; x++)
+					visibility[y, x] = false;
 		}
 	}
 }

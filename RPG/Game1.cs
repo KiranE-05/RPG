@@ -18,20 +18,20 @@ namespace RPG
 		Texture2D _playerDot;
 
 		private Raycaster.Raycaster raycaster;
+		private MapManager mapManager;
 		private Player player;
 
-		Minimap _minimap;
+		private int _mapWidth = 20;
+		private int _mapHeight = 20;
 
-		private int _mapWidth = 50;
-		private int _mapHeight = 50;
-
-		private int[,] map;
+		public int[,] map;
 
 		public Game1()
 		{
 			var gdm = new GraphicsDeviceManager(this);
 			gdm.PreferredBackBufferHeight = 600;
 			gdm.PreferredBackBufferWidth = 800;
+			gdm.IsFullScreen = true;
 			_graphics = gdm;
 			Content.RootDirectory = "Content";
 			IsMouseVisible = true;
@@ -43,15 +43,14 @@ namespace RPG
 			GraphicsDevice.SamplerStates[0] = SamplerState.PointClamp;
 			Mouse.SetPosition(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2);
 
-			map = MapHelper.GenerateRandomMap(_mapWidth, _mapHeight);
-			player = new Player(MapHelper.FindSafeStartPosition(map), map);
+			// Access the shared map
+			MapManager.Instance.Regenerate(_mapWidth, _mapHeight);
+			var map = MapManager.Instance.GetMap();
+
+			player = new Player(MapHelper.FindSafeStartPosition(MapManager.Instance.GetMap()));
 
 			_playerDot = new Texture2D(GraphicsDevice, 1, 1);
 			_playerDot.SetData(new[] { Color.Red });
-
-
-
-			
 
 			base.Initialize();
 		}
@@ -65,10 +64,9 @@ namespace RPG
 			stoneTexture = Content.Load<Texture2D>("Textures/stonebricks1");
 			exitTexture = Content.Load<Texture2D>("Textures/stonebricks1_door");
 
-			raycaster = new Raycaster.Raycaster(map, stoneTexture, exitTexture, stoneTexture, _spriteBatch);
+			raycaster = new Raycaster.Raycaster(stoneTexture, exitTexture, stoneTexture, _spriteBatch);
 
-			_minimap = new Minimap(_mapWidth, _mapHeight, 2, GraphicsDevice, _spriteBatch);
-			raycaster.Minimap = _minimap;
+			Minimap.Initialize(_mapWidth, _mapHeight, 4, GraphicsDevice, _spriteBatch);
 		}
 
 		protected override void Update(GameTime gameTime)
@@ -89,7 +87,7 @@ namespace RPG
 				Mouse.SetPosition(centerX, mouse.Y);
 			}
 
-			player.Update(gameTime, map, raycaster);
+			player.Update(gameTime);
 
 			base.Update(gameTime);
 		}
@@ -105,7 +103,7 @@ namespace RPG
 					player.Direction,      // current player direction
 					player.CameraPlane);   // current camera plane
 
-			_minimap.Draw(raycaster.GetMap(), player.Position, player.Direction);
+			Minimap.Instance.Draw(player.Position, player.Direction);
 
 			_spriteBatch.End();
 			base.Draw(gameTime);
