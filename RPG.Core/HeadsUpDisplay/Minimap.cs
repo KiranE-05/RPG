@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using RPG.Core;
+using RPG.Core.Hero;
 using System;
 
 namespace RPG.Core.HeadsUpDisplay
@@ -48,12 +49,15 @@ namespace RPG.Core.HeadsUpDisplay
                 visibility[y, x] = true;
         }
 
-        public void Draw(Vector2 playerPos, Vector2 playerDir)
+        public void Draw()
         {
-            int offsetX = 10;
+            var playerPos = Player.Instance.Position;
+            var playerDir = Player.Instance.Direction;
+			int offsetX = 10;
             int offsetY = 10;
             int minimapWidth = _mapSize * tileSize;
             int minimapHeight = mapHeight * tileSize;
+            
 
             // Background and border
             spriteBatch.Draw(pixel, new Rectangle(offsetX - 2, offsetY - 2, minimapWidth + 4, minimapHeight + 4), Color.Gold);

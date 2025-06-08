@@ -8,6 +8,7 @@ using RPG.Core.HeadsUpDisplay;
 using RPG.Core.Helpers;
 using RPG.Core.Hero;
 using System;
+using System.Runtime.Intrinsics.Arm;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace RPG
@@ -61,23 +62,35 @@ namespace RPG
 
 			GraphicsDevice.Clear(Color.Black);
 			_defaultFont = Content.Load<SpriteFont>("DefaultFont");
+
+			// Initialize UI Elements
 			HUD.Initialize(_spriteBatch, _defaultFont, GraphicsDevice);
 			Minimap.Initialize(_mapSize, 6, GraphicsDevice, _spriteBatch);
+			InventoryUI.Initialize(GraphicsDevice, _spriteBatch);
+			UI.Initialize(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+
+			// Make a map
 			MapManager.Instance.Regenerate(_mapSize);
 
+			// Setup the player
 			Player.Initialize(MapHelper.FindSafeStartPosition());
 
+			// Textures
 			stoneTexture = Content.Load<Texture2D>("Textures/stonebricks1");
 			exitTexture = Content.Load<Texture2D>("Textures/stonebricks1_door");
 			chestTexture = Content.Load<Texture2D>("Textures/Chest");
 
+			// Music
 			MedievalProceduralAudio generator = new();
 			SoundEffect song = generator.GenerateSong(45);
 			SoundEffectInstance instance = song.CreateInstance();
 			instance.IsLooped = true;
 			instance.Play();
 
+			// Raycaster
 			Raycaster.Raycaster.Initialize(stoneTexture, exitTexture, stoneTexture, chestTexture, _spriteBatch);
+
+
 			Inventory.Initialize(_spriteBatch, _defaultFont, GraphicsDevice);
 		}
 
@@ -136,7 +149,7 @@ namespace RPG
 
 			if (inventoryVisible)
 			{
-				Inventory.Instance.DrawInventoryUI();
+				InventoryUI.Instance.DrawInventoryUI();
 			}
 
 			_spriteBatch.End();
@@ -151,9 +164,8 @@ namespace RPG
 		Player.Instance.Direction,      // current player direction
 		Player.Instance.CameraPlane);   // current camera plane
 
-			Minimap.Instance.Draw(Player.Instance.Position, Player.Instance.Direction);
 			// After raycast rendering:
-			HUD.Instance.Draw(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, Player.Instance.Stats);
+			UI.Instance.DrawUI();
 		}
 
 		

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using RPG.Core.Hero;
 using System;
 
 namespace RPG.Core.HeadsUpDisplay
@@ -38,8 +39,9 @@ namespace RPG.Core.HeadsUpDisplay
             instance ??= new HUD(spriteBatch, font, graphicsDevice);
         }
 
-        public void Draw(int screenWidth, int screenHeight, Hero.PlayerStats stats)
+        public void Draw(int screenWidth, int screenHeight)
         {
+            var stats = Player.Instance.Stats;
             Rectangle panelRect = new Rectangle(0, screenHeight - _panelHeight, screenWidth, _panelHeight);
             _spriteBatch.Draw(_background, panelRect, Color.Black);
 

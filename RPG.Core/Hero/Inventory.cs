@@ -82,54 +82,6 @@ namespace RPG.Core
 			}
 			return true;
 		}
-		public void DrawInventoryUI()
-		{
-			int slotSize = 50;
-			int padding = 5;
-			int columns = 6;
-			int rows = Inventory.InventorySize / columns;
-
-			int startX = 100;
-			int startY = 100;
-
-			var inv = Inventory.Instance;
-
-			// Background box
-			_spriteBatch.Draw(GetPixelTexture(), new Rectangle(startX - 10, startY - 10,
-				columns * (slotSize + padding) + 20, rows * (slotSize + padding) + 20), Color.Black * 0.8f);
-
-			for (int i = 0; i < Inventory.InventorySize; i++)
-			{
-				int col = i % columns;
-				int row = i / columns;
-
-				Rectangle slotRect = new Rectangle(startX + col * (slotSize + padding), startY + row * (slotSize + padding), slotSize, slotSize);
-
-				// Draw slot background
-				_spriteBatch.Draw(GetPixelTexture(), slotRect, Color.DarkGray);
-
-				var item = inv.GetItem(i);
-				if (item != null)
-				{
-					// Draw item name centered
-					Vector2 textSize = _font.MeasureString(item.Name);
-					Vector2 textPos = new Vector2(slotRect.X + (slotSize - textSize.X) / 2, slotRect.Y + (slotSize - textSize.Y) / 2);
-					_spriteBatch.DrawString(_font, item.Name, textPos, Color.White);
-				}
-			}
-		}
-
-		// Simple 1x1 white pixel texture helper
-		private Texture2D pixelTexture;
-		private Texture2D GetPixelTexture()
-		{
-			if (pixelTexture == null)
-			{
-				pixelTexture = new Texture2D(_graphicsDevice, 1, 1);
-				pixelTexture.SetData(new[] { Color.White });
-			}
-			return pixelTexture;
-		}
 
 	}
 
