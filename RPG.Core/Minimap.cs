@@ -30,6 +30,7 @@ namespace Raycaster
 			_mapSize = mapSize;
 			this.tileSize = tileSize;
 			this.spriteBatch = spriteBatch;
+			this.mapHeight = mapSize;
 			visibility = new bool[mapSize, mapSize];
 
 			pixel = new Texture2D(graphicsDevice, 1, 1);
