@@ -39,8 +39,7 @@ namespace RPG.Core.HeadsUpDisplay
 
         public static void Initialize(int mapSize, int tileSize, GraphicsDevice graphicsDevice, SpriteBatch spriteBatch)
         {
-            if (instance == null)
-                instance = new Minimap(mapSize, tileSize, graphicsDevice, spriteBatch);
+            instance ??= new Minimap(mapSize, tileSize, graphicsDevice, spriteBatch);
         }
 
         public void MarkVisible(int x, int y)
@@ -67,8 +66,6 @@ namespace RPG.Core.HeadsUpDisplay
                 for (int x = 0; x < _mapSize; x++)
                 {
                     if (!visibility[y, x]) continue;
-
-                    var c = map[x, y];
 
                     Color color = map[y, x] switch
                     {

@@ -12,9 +12,8 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace RPG
 {
-    public class Game1 : Game
+	public class Game1 : Game
 	{
-		private GraphicsDeviceManager _graphics;
 		private SpriteBatch _spriteBatch;
 
 		Texture2D stoneTexture;
@@ -22,13 +21,11 @@ namespace RPG
 		Texture2D chestTexture;
 		Texture2D _playerDot;
 
-		Song music;
-
 		private bool inventoryVisible = false;
 
-		private bool Paused = false;
+		private bool _paused = false;
 
-		public static SpriteFont DefaultFont;
+		private static SpriteFont _defaultFont;
 
 		private readonly int _mapSize = 25;
 
@@ -36,11 +33,12 @@ namespace RPG
 
 		public Game1()
 		{
-			var gdm = new GraphicsDeviceManager(this);
-			gdm.PreferredBackBufferHeight = 600;
-			gdm.PreferredBackBufferWidth = 800;
-			gdm.IsFullScreen = true;
-			_graphics = gdm;
+			var gdm = new GraphicsDeviceManager(this)
+			{
+				PreferredBackBufferHeight = 600,
+				PreferredBackBufferWidth = 800,
+				IsFullScreen = false
+			};
 			Content.RootDirectory = "Content";
 			IsMouseVisible = true;
 		}
@@ -62,8 +60,8 @@ namespace RPG
 			_spriteBatch = new SpriteBatch(GraphicsDevice);
 
 			GraphicsDevice.Clear(Color.Black);
-			DefaultFont = Content.Load<SpriteFont>("DefaultFont");
-			HUD.Initialize(_spriteBatch, DefaultFont, GraphicsDevice);
+			_defaultFont = Content.Load<SpriteFont>("DefaultFont");
+			HUD.Initialize(_spriteBatch, _defaultFont, GraphicsDevice);
 			Minimap.Initialize(_mapSize, 6, GraphicsDevice, _spriteBatch);
 			MapManager.Instance.Regenerate(_mapSize);
 
@@ -73,14 +71,14 @@ namespace RPG
 			exitTexture = Content.Load<Texture2D>("Textures/stonebricks1_door");
 			chestTexture = Content.Load<Texture2D>("Textures/Chest");
 
-			MedievalProceduralAudio generator = new MedievalProceduralAudio();
-			SoundEffect song = generator.GenerateSong(30);
+			MedievalProceduralAudio generator = new();
+			SoundEffect song = generator.GenerateSong(45);
 			SoundEffectInstance instance = song.CreateInstance();
 			instance.IsLooped = true;
 			instance.Play();
 
 			Raycaster.Raycaster.Initialize(stoneTexture, exitTexture, stoneTexture, chestTexture, _spriteBatch);
-			Inventory.Initialize(_spriteBatch, DefaultFont, GraphicsDevice);
+			Inventory.Initialize(_spriteBatch, _defaultFont, GraphicsDevice);
 		}
 
 		protected override void Update(GameTime gameTime)
@@ -93,7 +91,7 @@ namespace RPG
 			if (kb.IsKeyDown(Keys.I) && !prevKeyboardState.IsKeyDown(Keys.I))
 			{
 				inventoryVisible = !inventoryVisible;
-				Paused = inventoryVisible;
+				_paused = inventoryVisible;
 			}
 
 			prevKeyboardState = kb;
@@ -101,7 +99,7 @@ namespace RPG
 			// Show/hide mouse cursor depending on inventory state
 			IsMouseVisible = inventoryVisible;
 
-			if (!Paused)
+			if (!_paused)
 			{
 				// Only update game logic when inventory is closed
 				UpdateGameLogic(gameTime);

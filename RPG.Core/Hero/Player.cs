@@ -26,8 +26,7 @@ namespace RPG.Core.Hero
 
 		public static void Initialize(Vector2 startPosition)
 		{
-			if (instance == null)
-				instance = new Player(startPosition);
+			instance ??= new Player(startPosition);
 		}
 
 		private Player(Vector2 startPosition)
@@ -73,9 +72,6 @@ namespace RPG.Core.Hero
 
 			Position = newPos;
 
-			int playerTileX = (int)Position.X;
-			int playerTileY = (int)Position.Y;
-
 			Vector2 checkPos = Position + Direction * 0.5f; // 0.5 units in front of the player
 			int checkX = (int)checkPos.X;
 			int checkY = (int)checkPos.Y;
@@ -105,7 +101,7 @@ namespace RPG.Core.Hero
 			CameraPlane.Y = oldPlaneX * sin + CameraPlane.Y * cos;
 		}
 
-		private bool IsWalkable(Vector2 pos)
+		private static bool IsWalkable(Vector2 pos)
 		{
 			int x = (int)pos.X;
 			int y = (int)pos.Y;

@@ -83,7 +83,7 @@ namespace RPG.Core.Helpers
 			map[centerY, centerX] = 0;
 
 			// === DEAD-END DETECTION FOR CHESTS ===
-			List<(int x, int y)> deadEnds = new();
+			List<(int x, int y)> deadEnds = [];
 			for (int y = 1; y < height - 1; y++)
 			{
 				for (int x = 1; x < width - 1; x++)

@@ -19,7 +19,7 @@ namespace RPG.Core.HeadsUpDisplay
 
         private SpriteFont _font;
         private SpriteBatch _spriteBatch;
-        private Texture2D _background;
+        private readonly Texture2D _background;
         private int _panelHeight = 64;
 
         private HUD(SpriteBatch spriteBatch, SpriteFont font, GraphicsDevice graphicsDevice)
@@ -35,8 +35,7 @@ namespace RPG.Core.HeadsUpDisplay
 
         public static void Initialize(SpriteBatch spriteBatch, SpriteFont font, GraphicsDevice graphicsDevice)
         {
-            if (instance == null)
-                instance = new HUD(spriteBatch, font, graphicsDevice);
+            instance ??= new HUD(spriteBatch, font, graphicsDevice);
         }
 
         public void Draw(int screenWidth, int screenHeight, Hero.PlayerStats stats)
