@@ -2,8 +2,6 @@
 using Microsoft.Xna.Framework.Graphics;
 using RPG.Core;
 using RPG.Core.HeadsUpDisplay;
-using RPG.Core.Helpers;
-using System;
 
 namespace Raycaster
 {
@@ -20,33 +18,33 @@ namespace Raycaster
 			}
 		}
 
-		private int mapWidth;
-		private int mapHeight;
-		private Texture2D wallTexture;
-		private Texture2D exitTexture;
-		private Texture2D _floorTexture;
-		private Texture2D _chestTexture;
-		private SpriteBatch _spriteBatch;
+		private readonly int _mapWidth;
+		private readonly int _mapHeight;
+		private readonly Texture2D _wallTexture;
+		private readonly Texture2D _exitTexture;
+		private readonly Texture2D _floorTexture;
+		private readonly Texture2D _chestTexture;
+		private readonly SpriteBatch _spriteBatch;
 
-		private Color[] floorTextureData;
-		private Color[] chestTextureData;
+		private readonly Color[] floorTextureData;
+		private readonly Color[] chestTextureData;
 
-		private int texWidth;
-		private int texHeight;
+		private readonly int texWidth;
+		private readonly int texHeight;
 
 		private Raycaster(Texture2D wallTexture, Texture2D exitTexture, Texture2D floorTexture, Texture2D chestTexture, SpriteBatch spriteBatch)
 		{
-			mapHeight = MapManager.Instance.GetMap().GetLength(0);
-			mapWidth = MapManager.Instance.GetMap().GetLength(1);
-			this.wallTexture = wallTexture;
-			this.exitTexture = exitTexture;
+			_mapHeight = MapManager.Instance.GetMap().GetLength(0);
+			_mapWidth = MapManager.Instance.GetMap().GetLength(1);
+			_wallTexture = wallTexture;
+			_exitTexture = exitTexture;
 			_chestTexture = chestTexture;
 
-			this._floorTexture = floorTexture;
+			_floorTexture = floorTexture;
 			chestTextureData = new Color[_chestTexture.Width * _chestTexture.Height];
 			_chestTexture.GetData(chestTextureData);
 
-			this._spriteBatch = spriteBatch;
+			_spriteBatch = spriteBatch;
 
 
 			texWidth = wallTexture.Width;
@@ -58,8 +56,7 @@ namespace Raycaster
 
 		public static void Initialize(Texture2D wallTexture, Texture2D exitTexture, Texture2D floorTexture, Texture2D chestTexture, SpriteBatch spriteBatch)
 		{
-			if (instance == null)
-				instance = new Raycaster(wallTexture, exitTexture, floorTexture, chestTexture, spriteBatch);
+			instance ??= new Raycaster(wallTexture, exitTexture, floorTexture, chestTexture, spriteBatch);
 		}
 
 		public void Render(int screenWidth, int screenHeight,
@@ -71,10 +68,8 @@ namespace Raycaster
 				float cameraX = 2 * x / (float)screenWidth - 1;
 				Vector2 rayDir = playerDir + cameraPlane * cameraX;
 
-				Vector2 mapCheck = new Vector2((int)playerPos.X, (int)playerPos.Y);
-				Vector2 deltaDist = new Vector2(
-					Math.Abs(1 / rayDir.X),
-					Math.Abs(1 / rayDir.Y));
+				Vector2 mapCheck = new((int)playerPos.X, (int)playerPos.Y);
+				Vector2 deltaDist = new(Math.Abs(1 / rayDir.X),	Math.Abs(1 / rayDir.Y));
 
 				Vector2 sideDist;
 				Vector2 step;
@@ -123,7 +118,7 @@ namespace Raycaster
 						side = 1;
 					}
 
-					if (mapCheck.X < 0 || mapCheck.X >= mapWidth || mapCheck.Y < 0 || mapCheck.Y >= mapHeight)
+					if (mapCheck.X < 0 || mapCheck.X >= _mapWidth || mapCheck.Y < 0 || mapCheck.Y >= _mapHeight)
 						break;
 
 					int tile = MapManager.Instance.GetMap()[(int)mapCheck.Y, (int)mapCheck.X];
@@ -143,8 +138,8 @@ namespace Raycaster
 
 				Texture2D texToUse = mapTile switch
 				{
-					1 => wallTexture,
-					2 => exitTexture,
+					1 => _wallTexture,
+					2 => _exitTexture,
 					_ => null // Do not render chests here
 				};
 
@@ -180,8 +175,8 @@ namespace Raycaster
 					int texY = ((d * texHeight) / lineHeight) / 256;
 					texY = Math.Clamp(texY, 0, texHeight - 1);
 
-					Rectangle sourceRect = new Rectangle(texX, texY, 1, 1);
-					Rectangle destRect = new Rectangle(x, y, 1, 1);
+					Rectangle sourceRect = new(texX, texY, 1, 1);
+					Rectangle destRect = new(x, y, 1, 1);
 
 					Color shade = (side == 1) ? Color.Gray : Color.White;
 
