@@ -13,6 +13,7 @@ namespace RPG.Core.Helpers
 		// 0 = empty space
 		// 1 = wall
 		// 2 = exit (exactly one)
+		// 3 = chest (5 per level)
 		public static int[,] GenerateRandomMap(int width, int height, Random rng = null)
 		{
 			if (width < 3 || height < 3)
@@ -29,11 +30,9 @@ namespace RPG.Core.Helpers
 			int centerX = width / 2;
 			int centerY = height / 2;
 
-			// Ensure odd dimensions for proper maze generation
 			if (centerX % 2 == 0) centerX--;
 			if (centerY % 2 == 0) centerY--;
 
-			// Carve maze using DFS from center
 			var stack = new Stack<(int x, int y)>();
 			stack.Push((centerX, centerY));
 			map[centerY, centerX] = 0;
@@ -43,38 +42,35 @@ namespace RPG.Core.Helpers
 			while (stack.Count > 0)
 			{
 				var (x, y) = stack.Pop();
-
-				// Shuffle directions
 				var dirs = Enumerable.Range(0, 4).OrderBy(_ => rng.Next()).ToList();
 
 				foreach (int i in dirs)
 				{
 					int dx = directions[i, 0];
 					int dy = directions[i, 1];
-
 					int nx = x + dx;
 					int ny = y + dy;
 
 					if (nx > 0 && nx < width - 1 && ny > 0 && ny < height - 1 && map[ny, nx] == 1)
 					{
-						map[ny, nx] = 0; // carve new cell
-						map[y + dy / 2, x + dx / 2] = 0; // carve passage between
+						map[ny, nx] = 0;
+						map[y + dy / 2, x + dx / 2] = 0;
 						stack.Push((nx, ny));
 					}
 				}
 			}
 
-			// Choose a maze edge cell as an exit
+			// Pick an exit point
 			var possibleExits = new List<(int x, int y)>();
 			for (int x = 1; x < width - 1; x++)
 			{
-				if (map[1, x] == 0) possibleExits.Add((x, 0)); // top
-				if (map[height - 2, x] == 0) possibleExits.Add((x, height - 1)); // bottom
+				if (map[1, x] == 0) possibleExits.Add((x, 0));
+				if (map[height - 2, x] == 0) possibleExits.Add((x, height - 1));
 			}
 			for (int y = 1; y < height - 1; y++)
 			{
-				if (map[y, 1] == 0) possibleExits.Add((0, y)); // left
-				if (map[y, width - 2] == 0) possibleExits.Add((width - 1, y)); // right
+				if (map[y, 1] == 0) possibleExits.Add((0, y));
+				if (map[y, width - 2] == 0) possibleExits.Add((width - 1, y));
 			}
 
 			if (possibleExits.Count > 0)
@@ -86,8 +82,32 @@ namespace RPG.Core.Helpers
 			// Ensure player start location is empty
 			map[centerY, centerX] = 0;
 
+			// === DEAD-END DETECTION FOR CHESTS ===
+			List<(int x, int y)> deadEnds = new();
+			for (int y = 1; y < height - 1; y++)
+			{
+				for (int x = 1; x < width - 1; x++)
+				{
+					if (map[y, x] != 0) continue;
+
+					int neighborCount = 0;
+					if (map[y - 1, x] == 0) neighborCount++;
+					if (map[y + 1, x] == 0) neighborCount++;
+					if (map[y, x - 1] == 0) neighborCount++;
+					if (map[y, x + 1] == 0) neighborCount++;
+
+					if (neighborCount == 1)
+						deadEnds.Add((x, y));
+				}
+			}
+
+			// Shuffle and pick up to 5 dead ends
+			foreach (var (x, y) in deadEnds.OrderBy(_ => rng.Next()).Take(5))
+				map[y, x] = 3; // Place treasure chest
+
 			return map;
 		}
+
 
 
 		public static Vector2 FindSafeStartPosition()

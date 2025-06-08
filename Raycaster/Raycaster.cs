@@ -1,12 +1,13 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using RPG.Core;
+using RPG.Core.HeadsUpDisplay;
 using RPG.Core.Helpers;
 using System;
 
 namespace Raycaster
 {
-	public class Raycaster
+    public class Raycaster
 	{
 		private static Raycaster instance;
 		public static Raycaster Instance
@@ -24,20 +25,29 @@ namespace Raycaster
 		private Texture2D wallTexture;
 		private Texture2D exitTexture;
 		private Texture2D _floorTexture;
+		private Texture2D _chestTexture;
 		private SpriteBatch _spriteBatch;
 
 		private Color[] floorTextureData;
+		private Color[] chestTextureData;
+
 		private int texWidth;
 		private int texHeight;
 
-		private Raycaster(Texture2D wallTexture, Texture2D exitTexture, Texture2D floorTexture, SpriteBatch spriteBatch)
+		private Raycaster(Texture2D wallTexture, Texture2D exitTexture, Texture2D floorTexture, Texture2D chestTexture, SpriteBatch spriteBatch)
 		{
 			mapHeight = MapManager.Instance.GetMap().GetLength(0);
 			mapWidth = MapManager.Instance.GetMap().GetLength(1);
 			this.wallTexture = wallTexture;
 			this.exitTexture = exitTexture;
+			_chestTexture = chestTexture;
+
 			this._floorTexture = floorTexture;
+			chestTextureData = new Color[_chestTexture.Width * _chestTexture.Height];
+			_chestTexture.GetData(chestTextureData);
+
 			this._spriteBatch = spriteBatch;
+
 
 			texWidth = wallTexture.Width;
 			texHeight = wallTexture.Height;
@@ -46,15 +56,16 @@ namespace Raycaster
 			_floorTexture.GetData(floorTextureData);
 		}
 
-		public static void Initialize(Texture2D wallTexture, Texture2D exitTexture, Texture2D floorTexture, SpriteBatch spriteBatch)
+		public static void Initialize(Texture2D wallTexture, Texture2D exitTexture, Texture2D floorTexture, Texture2D chestTexture, SpriteBatch spriteBatch)
 		{
 			if (instance == null)
-				instance = new Raycaster(wallTexture, exitTexture, floorTexture, spriteBatch);
+				instance = new Raycaster(wallTexture, exitTexture, floorTexture, chestTexture, spriteBatch);
 		}
 
 		public void Render(int screenWidth, int screenHeight,
 						   Vector2 playerPos, Vector2 playerDir, Vector2 cameraPlane)
 		{
+			float[] zBuffer = new float[screenWidth];
 			for (int x = 0; x < screenWidth; x++)
 			{
 				float cameraX = 2 * x / (float)screenWidth - 1;
@@ -115,7 +126,8 @@ namespace Raycaster
 					if (mapCheck.X < 0 || mapCheck.X >= mapWidth || mapCheck.Y < 0 || mapCheck.Y >= mapHeight)
 						break;
 
-					if (MapManager.Instance.GetMap()[(int)mapCheck.Y, (int)mapCheck.X] > 0)
+					int tile = MapManager.Instance.GetMap()[(int)mapCheck.Y, (int)mapCheck.X];
+					if (tile > 0 && tile != 3) // Skip chest as wall hit
 						hit = true;
 
 					steps++;
@@ -124,8 +136,17 @@ namespace Raycaster
 				if (!hit)
 					continue;
 
+				// ← This is the fix
+				Minimap.Instance.MarkVisible((int)mapCheck.X, (int)mapCheck.Y);
+
 				int mapTile = MapManager.Instance.GetMap()[(int)mapCheck.Y, (int)mapCheck.X];
-				Texture2D texToUse = (mapTile == 2) ? exitTexture : wallTexture;
+
+				Texture2D texToUse = mapTile switch
+				{
+					1 => wallTexture,
+					2 => exitTexture,
+					_ => null // Do not render chests here
+				};
 
 				float perpWallDist;
 
@@ -135,6 +156,8 @@ namespace Raycaster
 					perpWallDist = (mapCheck.Y - playerPos.Y + (1 - step.Y) / 2f) / rayDir.Y;
 
 				perpWallDist = Math.Max(Math.Abs(perpWallDist), 0.1f);
+
+				zBuffer[x] = perpWallDist;
 
 				int lineHeight = (int)(screenHeight / perpWallDist);
 				int drawStart = Math.Clamp(-lineHeight / 2 + screenHeight / 2, 0, screenHeight - 1);
@@ -162,7 +185,8 @@ namespace Raycaster
 
 					Color shade = (side == 1) ? Color.Gray : Color.White;
 
-					_spriteBatch.Draw(texToUse, destRect, sourceRect, shade);
+					if(texToUse != null)
+						_spriteBatch.Draw(texToUse, destRect, sourceRect, shade);
 				}
 
 				// Floor and ceiling
@@ -215,6 +239,85 @@ namespace Raycaster
 					}
 				}
 			}
+
+			RenderChests(playerPos, playerDir, cameraPlane, screenWidth, screenHeight, zBuffer);
+		}
+
+		private void RenderChests(Vector2 playerPos, Vector2 playerDir, Vector2 cameraPlane, int screenWidth, int screenHeight, float[] zBuffer)
+		{
+			var map = MapManager.Instance.GetMap();
+			int mapHeight = map.GetLength(0);
+			int mapWidth = map.GetLength(1);
+
+			float spriteSize = 0.75f; // Adjust for chest scale on screen
+
+			for (int y = 0; y < mapHeight; y++)
+			{
+				for (int x = 0; x < mapWidth; x++)
+				{
+					if (map[y, x] != 3) continue; // Only draw chests (value 3)
+
+					// Sprite world position: center of tile
+					float spriteX = x + 0.5f;
+					float spriteY = y + 0.5f;
+
+					// Translate sprite position to relative to camera
+					float dx = spriteX - playerPos.X;
+					float dy = spriteY - playerPos.Y;
+
+					// Inverse camera matrix
+					float invDet = 1.0f / (cameraPlane.X * playerDir.Y - playerDir.X * cameraPlane.Y);
+
+					float transformX = invDet * (playerDir.Y * dx - playerDir.X * dy);
+					float transformY = invDet * (-cameraPlane.Y * dx + cameraPlane.X * dy);
+
+					if (transformY <= 0) continue; // Sprite is behind the player
+
+					int spriteScreenX = (int)((screenWidth / 2) * (1 + transformX / transformY));
+
+					// Height and width of the sprite on screen
+					int spriteHeight = Math.Abs((int)(screenHeight / transformY * spriteSize));
+					int drawStartY = -spriteHeight / 2 + screenHeight / 2;
+					int drawEndY = spriteHeight / 2 + screenHeight / 2;
+
+					int spriteWidth = spriteHeight; // Assuming square sprite
+					int drawStartX = -spriteWidth / 2 + spriteScreenX;
+					int drawEndX = spriteWidth / 2 + spriteScreenX;
+
+					drawStartY = Math.Clamp(drawStartY, 0, screenHeight - 1);
+					drawEndY = Math.Clamp(drawEndY, 0, screenHeight - 1);
+					drawStartX = Math.Clamp(drawStartX, 0, screenWidth - 1);
+					drawEndX = Math.Clamp(drawEndX, 0, screenWidth - 1);
+
+					for (int stripe = drawStartX; stripe < drawEndX; stripe++)
+					{
+						if (transformY < zBuffer[stripe]) // Occlusion check
+						{
+							int texX = (int)((stripe - drawStartX) * _chestTexture.Width / (drawEndX - drawStartX));
+
+							for (int yPix = drawStartY; yPix < drawEndY; yPix++)
+							{
+								int texY = (int)((yPix - drawStartY) * _chestTexture.Height / (drawEndY - drawStartY));
+
+								Color color = GetChestPixelColor(texX, texY);
+								if (color.A > 32) // Skip transparent pixels
+								{
+									_spriteBatch.Draw(
+										_chestTexture,
+										new Rectangle(stripe, yPix, 1, 1),
+										new Rectangle(texX, texY, 1, 1),
+										color);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		private Color GetChestPixelColor(int x, int y)
+		{
+			int index = y * _chestTexture.Width + x;
+			return chestTextureData[index];
 		}
 	}
 }

@@ -1,9 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
-using Raycaster;
 using RPG.Core;
+using RPG.Core.HeadsUpDisplay;
 using RPG.Core.Helpers;
 using RPG.Core.Hero;
 using System;
@@ -11,13 +12,14 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace RPG
 {
-	public class Game1 : Game
+    public class Game1 : Game
 	{
 		private GraphicsDeviceManager _graphics;
 		private SpriteBatch _spriteBatch;
 
 		Texture2D stoneTexture;
 		Texture2D exitTexture;
+		Texture2D chestTexture;
 		Texture2D _playerDot;
 
 		Song music;
@@ -37,7 +39,7 @@ namespace RPG
 			var gdm = new GraphicsDeviceManager(this);
 			gdm.PreferredBackBufferHeight = 600;
 			gdm.PreferredBackBufferWidth = 800;
-			gdm.IsFullScreen = false;
+			gdm.IsFullScreen = true;
 			_graphics = gdm;
 			Content.RootDirectory = "Content";
 			IsMouseVisible = true;
@@ -69,12 +71,15 @@ namespace RPG
 
 			stoneTexture = Content.Load<Texture2D>("Textures/stonebricks1");
 			exitTexture = Content.Load<Texture2D>("Textures/stonebricks1_door");
+			chestTexture = Content.Load<Texture2D>("Textures/Chest");
 
-			music = Content.Load<Song>("Audio/Music/Dungeon-Crawler");
-			MediaPlayer.Play(music);
-			MediaPlayer.IsRepeating = true;
+			MedievalProceduralAudio generator = new MedievalProceduralAudio();
+			SoundEffect song = generator.GenerateSong(30);
+			SoundEffectInstance instance = song.CreateInstance();
+			instance.IsLooped = true;
+			instance.Play();
 
-			Raycaster.Raycaster.Initialize(stoneTexture, exitTexture, stoneTexture, _spriteBatch);
+			Raycaster.Raycaster.Initialize(stoneTexture, exitTexture, stoneTexture, chestTexture, _spriteBatch);
 			Inventory.Initialize(_spriteBatch, DefaultFont, GraphicsDevice);
 		}
 
